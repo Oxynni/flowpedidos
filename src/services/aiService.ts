@@ -102,3 +102,12 @@ export const AIService = {
     conversationHistory.delete(sessionId);
   },
 };
+
+
+function analyzeSentiment(message: string): string {
+  const positiveWords = ['gracias', 'excelente', 'bueno', 'genial', 'perfecto'];
+  const negativeWords = ['malo', 'pesimo', 'error', 'problema', 'queja'];
+  for (const w of positiveWords) { if (message.includes(w)) return 'positivo'; }
+  for (const w of negativeWords) { if (message.includes(w)) return 'negativo'; }
+  return 'neutral';
+}
