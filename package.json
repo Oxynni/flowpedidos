@@ -1,0 +1,27 @@
+{
+  "name": "flowpedidos",
+  "version": "1.0.0",
+  "description": "Sistema de Automatización de Flujo Pedido-Factura-Despacho con IA",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit",
+    "docs": "ts-node scripts/generate-docs.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/uuid": "^10.0.0",
+    "docx": "^8.5.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.0"
+  }
+}
