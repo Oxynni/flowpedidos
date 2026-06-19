@@ -164,8 +164,15 @@ export const OrderService = {
     const payments: PaymentMethod[] = ['efectivo', 'tarjeta', 'transferencia', 'credito'];
     const carriers = ['DHL', 'FedEx', 'Estafeta', 'Paqueteria Express'];
 
+    const now = new Date();
     for (let i = 0; i < 12; i++) {
       const c = clients[i];
+      const daysAgo = Math.floor(Math.random() * 14);
+      const hrsAgo = Math.floor(Math.random() * 12);
+      const orderDate = new Date(now);
+      orderDate.setDate(orderDate.getDate() - daysAgo);
+      orderDate.setHours(orderDate.getHours() - hrsAgo);
+
       const numProducts = 1 + Math.floor(Math.random() * 4);
       const shuffled = [...allProducts].sort(() => Math.random() - 0.5).slice(0, numProducts);
       const items = shuffled.map(p => ({
@@ -183,6 +190,7 @@ export const OrderService = {
         items,
         paymentMethod: payments[Math.floor(Math.random() * payments.length)],
         notes: `Pedido #${i + 1} - Cliente ${c.name}`,
+        createdAt: orderDate,
       });
 
       const statuses: OrderStatus[] = ['pendiente', 'confirmado', 'en_facturacion', 'facturado', 'en_despacho', 'despachado', 'entregado'];

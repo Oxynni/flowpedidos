@@ -15,8 +15,9 @@ export const OrderModel = {
     items: Omit<OrderItem, 'subtotal'>[];
     paymentMethod: PaymentMethod;
     notes?: string;
+    createdAt?: Date;
   }): Order {
-    const now = new Date();
+    const now = data.createdAt || new Date();
     const items: OrderItem[] = data.items.map(item => ({
       ...item,
       subtotal: item.quantity * item.unitPrice,

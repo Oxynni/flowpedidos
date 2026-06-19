@@ -42,6 +42,13 @@ function destroyCharts() {
   charts = {};
 }
 
+const CHART_ANIMATION = {
+  duration: 1000,
+  easing: 'easeOutQuart',
+  animateRotate: true,
+  animateScale: true,
+};
+
 function createDonutChart(id, labels, data, colors) {
   const ctx = document.getElementById(id);
   if (!ctx) return null;
@@ -50,11 +57,18 @@ function createDonutChart(id, labels, data, colors) {
     data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
     options: {
       responsive: true, maintainAspectRatio: false,
+      animation: CHART_ANIMATION,
       plugins: {
         legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` },
+        },
       },
-      cutout: '65%',
+      cutout: '68%',
+      hoverOffset: 8,
     },
   });
 }
@@ -74,6 +88,7 @@ function createBarChart(id, labels, data, color) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      animation: { ...CHART_ANIMATION, duration: 800 },
       plugins: { legend: { display: false } },
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
@@ -123,52 +138,63 @@ async function loadDashboard() {
       ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'],
     );
 
-    const byDate = {};
+    const dateMap = {};
     orders.forEach(o => {
       const d = new Date(o.createdAt);
-      const key = `${d.getDate()}/${d.getMonth() + 1}`;
-      byDate[key] = (byDate[key] || 0) + 1;
+      const key = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!dateMap[key]) dateMap[key] = { count: 0, revenue: 0 };
+      dateMap[key].count += 1;
+      dateMap[key].revenue += o.total;
     });
-    const trendLabels = Object.keys(byDate).slice(-10);
-    const trendData = trendLabels.map(k => byDate[k]);
+    const sortedDates = Object.keys(dateMap).sort((a, b) => {
+      const [da, ma] = a.split('/').map(Number);
+      const [db, mb] = b.split('/').map(Number);
+      return da + ma * 31 - (db + mb * 31);
+    });
 
     charts.ordersTrend = createBarChart('chart-orders-trend',
-      trendLabels, trendData,
+      sortedDates, sortedDates.map(k => dateMap[k].count),
       'rgba(99, 102, 241, 0.7)',
     );
 
-    const revByDate = {};
-    orders.forEach(o => {
-      const d = new Date(o.createdAt);
-      const key = `${d.getDate()}/${d.getMonth() + 1}`;
-      revByDate[key] = (revByDate[key] || 0) + o.total;
-    });
-    const revLabels = Object.keys(revByDate).slice(-10);
-    const revData = revLabels.map(k => revByDate[k]);
     const revCtx = document.getElementById('chart-revenue');
     if (revCtx) {
       charts.revenue = new Chart(revCtx, {
         type: 'line',
         data: {
-          labels: revLabels,
+          labels: sortedDates,
           datasets: [{
             label: 'Ingresos ($)',
-            data: revData,
+            data: sortedDates.map(k => dateMap[k].revenue),
             borderColor: '#10b981',
             backgroundColor: 'rgba(16, 185, 129, 0.1)',
             fill: true,
             tension: 0.4,
             pointRadius: 4,
             pointBackgroundColor: '#10b981',
+            pointHoverRadius: 7,
+            pointHoverBackgroundColor: '#059669',
           }],
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          animation: { ...CHART_ANIMATION, duration: 1200 },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              padding: 12,
+              cornerRadius: 8,
+              callbacks: {
+                label: ctx => ` $${ctx.parsed.y.toLocaleString()}`,
+              },
+            },
+          },
           scales: {
             y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString(), font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } },
           },
+          interaction: { intersect: false, mode: 'index' },
         },
       });
     }
