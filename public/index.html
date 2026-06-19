@@ -22,30 +22,49 @@
     <!-- DASHBOARD -->
     <div id="dashboard" class="page active">
       <div class="cards">
-        <div class="card"><h3>Total Pedidos</h3><div class="value" id="total-orders">0</div></div>
-        <div class="card"><h3>Pendientes</h3><div class="value orange" id="pending-orders">0</div></div>
-        <div class="card"><h3>Facturas</h3><div class="value" id="total-invoices">0</div></div>
-        <div class="card"><h3>Despachos</h3><div class="value" id="total-dispatches">0</div></div>
-        <div class="card"><h3>Entregados</h3><div class="value green" id="delivered">0</div></div>
-        <div class="card"><h3>Ingresos Totales</h3><div class="value green" id="revenue">$0</div></div>
+        <div class="card card-icon" data-icon="orders"><h3>Total Pedidos</h3><div class="value" id="total-orders">0</div></div>
+        <div class="card card-icon" data-icon="pending"><h3>Pendientes</h3><div class="value orange" id="pending-orders">0</div></div>
+        <div class="card card-icon" data-icon="invoices"><h3>Facturas</h3><div class="value" id="total-invoices">0</div></div>
+        <div class="card card-icon" data-icon="dispatches"><h3>Despachos</h3><div class="value" id="total-dispatches">0</div></div>
+        <div class="card card-icon" data-icon="delivered"><h3>Entregados</h3><div class="value green" id="delivered">0</div></div>
+        <div class="card card-icon" data-icon="revenue"><h3>Ingresos Totales</h3><div class="value green" id="revenue">$0</div></div>
       </div>
-      <div class="panel">
-        <h2>Flujo de Automatización</h2>
-        <div class="flow-diagram">
-          <div class="flow-step" id="flow-pendiente">Pedido</div>
-          <span class="flow-arrow">></span>
-          <div class="flow-step" id="flow-confirmado">Confirmado</div>
-          <span class="flow-arrow">></span>
-          <div class="flow-step" id="flow-facturado">Facturado</div>
-          <span class="flow-auto">AUTO</span>
-          <div class="flow-step" id="flow-despachado">Despachado</div>
-          <span class="flow-auto">AUTO</span>
-          <div class="flow-step" id="flow-entregado">Entregado</div>
+
+      <div class="charts-grid">
+        <div class="panel chart-panel">
+          <h2>Pedidos por Estado</h2>
+          <div class="chart-container"><canvas id="chart-orders-status"></canvas></div>
         </div>
-        <p style="color:#666;font-size:0.85rem;margin-top:0.5rem">
-          El sistema genera automáticamente la <strong>Factura</strong> al llegar a "facturado" 
-          y el <strong>Despacho</strong> al llegar a "despachado". <strong>Cero errores manuales.</strong>
-        </p>
+        <div class="panel chart-panel">
+          <h2>Facturas por Estado</h2>
+          <div class="chart-container"><canvas id="chart-invoices-status"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h2>Despachos por Estado</h2>
+          <div class="chart-container"><canvas id="chart-dispatches-status"></canvas></div>
+        </div>
+        <div class="panel chart-panel">
+          <h2>Tendencia de Pedidos</h2>
+          <div class="chart-container"><canvas id="chart-orders-trend"></canvas></div>
+        </div>
+        <div class="panel chart-panel chart-wide">
+          <h2>Ingresos Generados</h2>
+          <div class="chart-container"><canvas id="chart-revenue"></canvas></div>
+        </div>
+        <div class="panel chart-panel chart-wide">
+          <h2>Flujo de Automatización</h2>
+          <div class="flow-diagram">
+            <div class="flow-step" id="flow-pendiente">Pedido</div>
+            <span class="flow-arrow">></span>
+            <div class="flow-step" id="flow-confirmado">Confirmado</div>
+            <span class="flow-arrow">></span>
+            <div class="flow-step" id="flow-facturado">Facturado</div>
+            <span class="flow-auto">AUTO</span>
+            <div class="flow-step" id="flow-despachado">Despachado</div>
+            <span class="flow-auto">AUTO</span>
+            <div class="flow-step" id="flow-entregado">Entregado</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -143,6 +162,7 @@
     <div class="modal" id="modal-body"></div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

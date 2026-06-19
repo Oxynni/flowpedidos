@@ -35,11 +35,61 @@ function toast(msg, type = 'success') {
 // ============================================
 // DASHBOARD
 // ============================================
+let charts = {};
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if (c) { c.destroy(); } });
+  charts = {};
+}
+
+function createDonutChart(id, labels, data, colors) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+      },
+      cutout: '65%',
+    },
+  });
+}
+
+function createBarChart(id, labels, data, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Pedidos', data,
+        backgroundColor: color,
+        borderRadius: 6, borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+      },
+    },
+  });
+}
+
 async function loadDashboard() {
   try {
-    const [orderStats, invoiceStats, dispatchStats] = await Promise.all([
+    const [orderStats, invoiceStats, dispatchStats, orders] = await Promise.all([
       apiFetch('/orders/stats'), apiFetch('/invoices/stats'), apiFetch('/dispatches/stats'),
+      apiFetch('/orders'),
     ]);
+
     document.getElementById('total-orders').textContent = orderStats.total;
     document.getElementById('pending-orders').textContent = orderStats.pendiente;
     document.getElementById('total-invoices').textContent = invoiceStats.total;
@@ -52,6 +102,76 @@ async function loadDashboard() {
     document.getElementById('flow-facturado').classList.add('done');
     document.getElementById('flow-despachado').classList.add('done');
     document.getElementById('flow-entregado').classList.add('done');
+
+    destroyCharts();
+
+    charts.ordersStatus = createDonutChart('chart-orders-status',
+      ['Pendientes', 'Facturados', 'Despachados', 'Entregados', 'Cancelados'],
+      [orderStats.pendiente, orderStats.facturado, orderStats.despachado, orderStats.entregado, orderStats.cancelado],
+      ['#f59e0b', '#3b82f6', '#7c3aed', '#10b981', '#ef4444'],
+    );
+
+    charts.invoicesStatus = createDonutChart('chart-invoices-status',
+      ['Emitidas', 'Pagadas', 'Canceladas'],
+      [invoiceStats.emitidas || 0, invoiceStats.pagadas || 0, invoiceStats.canceladas || 0],
+      ['#3b82f6', '#10b981', '#ef4444'],
+    );
+
+    charts.dispatchesStatus = createDonutChart('chart-dispatches-status',
+      ['Preparando', 'En Tránsito', 'Entregados', 'Fallidos'],
+      [dispatchStats.preparando || 0, dispatchStats.enTransito || 0, dispatchStats.entregado || 0, dispatchStats.fallido || 0],
+      ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'],
+    );
+
+    const byDate = {};
+    orders.forEach(o => {
+      const d = new Date(o.createdAt);
+      const key = `${d.getDate()}/${d.getMonth() + 1}`;
+      byDate[key] = (byDate[key] || 0) + 1;
+    });
+    const trendLabels = Object.keys(byDate).slice(-10);
+    const trendData = trendLabels.map(k => byDate[k]);
+
+    charts.ordersTrend = createBarChart('chart-orders-trend',
+      trendLabels, trendData,
+      'rgba(99, 102, 241, 0.7)',
+    );
+
+    const revByDate = {};
+    orders.forEach(o => {
+      const d = new Date(o.createdAt);
+      const key = `${d.getDate()}/${d.getMonth() + 1}`;
+      revByDate[key] = (revByDate[key] || 0) + o.total;
+    });
+    const revLabels = Object.keys(revByDate).slice(-10);
+    const revData = revLabels.map(k => revByDate[k]);
+    const revCtx = document.getElementById('chart-revenue');
+    if (revCtx) {
+      charts.revenue = new Chart(revCtx, {
+        type: 'line',
+        data: {
+          labels: revLabels,
+          datasets: [{
+            label: 'Ingresos ($)',
+            data: revData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#10b981',
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString(), font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+          },
+        },
+      });
+    }
   } catch (e) { toast(e.message, 'error'); }
 }
 
