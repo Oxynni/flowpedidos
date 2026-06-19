@@ -514,10 +514,23 @@ const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 const suggestionsDiv = document.getElementById('suggestions');
 
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function formatChat(content) {
+  let html = escapeHtml(content);
+  html = html.replace(/\n/g, '<br>');
+  html = html.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+  return html;
+}
+
 function addChatMessage(role, content) {
   const div = document.createElement('div');
   div.className = `chat-msg ${role}`;
-  div.innerHTML = content.replace(/\n/g, '<br>') + `<span class="time">${new Date().toLocaleTimeString()}</span>`;
+  div.innerHTML = formatChat(content) + `<span class="time">${new Date().toLocaleTimeString()}</span>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -537,7 +550,9 @@ function hideTyping() {
 }
 
 function setSuggestions(suggestions) {
-  suggestionsDiv.innerHTML = suggestions.map(s => `<button onclick="sendChat('${s}')">${s}</button>`).join('');
+  suggestionsDiv.innerHTML = suggestions.map(s =>
+    `<button onclick="sendChat(this.dataset.msg)" data-msg="${escapeHtml(s).replace(/"/g, '&quot;')}">${escapeHtml(s)}</button>`
+  ).join('');
 }
 
 async function sendChat(msg) {
