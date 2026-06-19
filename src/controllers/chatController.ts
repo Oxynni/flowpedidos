@@ -35,11 +35,3 @@ export const ChatController = {
     return res.json({ success: true, message: 'Historial limpiado' });
   },
 };
-
-
-app.post('/api/chat/sentiment', (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: 'Mensaje requerido' });
-  const sentiment = analyzeSentiment(message);
-  res.json({ message, sentiment });
-});
