@@ -128,6 +128,34 @@ table tr:hover td { background: #f8fafc; }
 
 hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
 
+/* Dark mode */
+body.dark { --bg: #0f172a; --surface: #1e293b; --border: #334155; --text: #f1f5f9; --text-secondary: #94a3b8; --primary-light: #1e1b4b; --success-light: #022c22; --warning-light: #451a03; --danger-light: #450a0a; --info-light: #172554; --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.4); }
+body.dark table tr:hover td { background: #1a2332; }
+body.dark .chat-messages { background: #0f172a; }
+body.dark .chat-msg.assistant { background: #1e293b; border-color: #334155; }
+body.dark .flow-diagram { background: #0f172a; }
+body.dark .modal { background: #1e293b; }
+body.dark .modal-overlay { background: rgba(0,0,0,0.7); }
+body.dark table th { background: #0f172a; }
+
+/* Colorblind filters */
+body.cb-protanopia { filter: url(#cb-protanopia); }
+body.cb-deuteranopia { filter: url(#cb-deuteranopia); }
+body.cb-tritanopia { filter: url(#cb-tritanopia); }
+
+/* Theme buttons */
+.nav-divider { width: 1px; height: 28px; background: var(--border); margin: 0 0.25rem; align-self: center; }
+.theme-btn { background: var(--bg); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 8px; cursor: pointer; font-size: 1rem; line-height: 1; transition: all 0.15s; }
+.theme-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+
+.cb-wrapper { position: relative; }
+.cb-dropdown { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); min-width: 160px; z-index: 200; overflow: hidden; }
+.cb-dropdown.open { display: block; }
+.cb-dropdown button { display: block; width: 100%; background: transparent; border: none; padding: 0.55rem 1rem; font-size: 0.8rem; color: var(--text); cursor: pointer; text-align: left; font-family: inherit; transition: background 0.1s; }
+.cb-dropdown button:hover { background: var(--bg); color: var(--primary); }
+.cb-dropdown button:last-child { border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 0.75rem; }
+.cb-dropdown button:last-child:hover { color: var(--danger); }
+
 /* Charts */
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
 .chart-panel { min-height: 300px; }

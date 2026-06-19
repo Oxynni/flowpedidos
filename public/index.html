@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FlowPedidos - Automatización Pedido-Factura-Despacho</title>
   <link rel="stylesheet" href="/css/style.css">
+  <svg style="display:none" aria-hidden="true">
+    <filter id="cb-protanopia">
+      <feColorMatrix type="matrix" values="
+        0.567 0.433 0 0 0
+        0.558 0.442 0 0 0
+        0 0.242 0.758 0 0
+        0 0 0 1 0
+      "/>
+    </filter>
+    <filter id="cb-deuteranopia">
+      <feColorMatrix type="matrix" values="
+        0.625 0.375 0 0 0
+        0.7 0.3 0 0 0
+        0 0.3 0.7 0 0
+        0 0 0 1 0
+      "/>
+    </filter>
+    <filter id="cb-tritanopia">
+      <feColorMatrix type="matrix" values="
+        0.95 0.05 0 0 0
+        0 0.433 0.567 0 0
+        0 0.475 0.525 0 0
+        0 0 0 1 0
+      "/>
+    </filter>
+  </svg>
 </head>
 <body>
   <header>
@@ -15,6 +41,17 @@
       <button data-page="invoices" onclick="showPage('invoices')">Facturas</button>
       <button data-page="dispatches" onclick="showPage('dispatches')">Despachos</button>
       <button data-page="chatbot" onclick="showPage('chatbot')">Chatbot IA</button>
+      <span class="nav-divider"></span>
+      <button class="theme-btn" onclick="toggleDarkMode()" title="Modo oscuro/claro" id="dark-toggle">🌙</button>
+      <div class="cb-wrapper">
+        <button class="theme-btn" onclick="toggleCB()" title="Modo daltonicos" id="cb-toggle">👁</button>
+        <div class="cb-dropdown" id="cb-dropdown">
+          <button onclick="setCB('protanopia')">Protanopia</button>
+          <button onclick="setCB('deuteranopia')">Deuteranopia</button>
+          <button onclick="setCB('tritanopia')">Tritanopia</button>
+          <button onclick="setCB('off')">Desactivar</button>
+        </div>
+      </div>
     </nav>
   </header>
 

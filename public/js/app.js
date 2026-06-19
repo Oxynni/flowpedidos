@@ -2,6 +2,42 @@ const API = '/api';
 let currentSession = localStorage.getItem('chatSession') || crypto.randomUUID();
 localStorage.setItem('chatSession', currentSession);
 
+// ============================================
+// DARK MODE & COLORBLIND
+// ============================================
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  document.getElementById('dark-toggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+function toggleCB() {
+  document.getElementById('cb-dropdown').classList.toggle('open');
+}
+
+function setCB(mode) {
+  document.body.classList.remove('cb-protanopia', 'cb-deuteranopia', 'cb-tritanopia');
+  if (mode !== 'off') document.body.classList.add('cb-' + mode);
+  localStorage.setItem('cbMode', mode);
+  document.getElementById('cb-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('cb-dropdown');
+  if (dd && dd.classList.contains('open') && !e.target.closest('.cb-wrapper')) {
+    dd.classList.remove('open');
+  }
+});
+
+// Restore saved preferences
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+  const dt = document.getElementById('dark-toggle');
+  if (dt) dt.textContent = '☀️';
+}
+const savedCB = localStorage.getItem('cbMode');
+if (savedCB && savedCB !== 'off') document.body.classList.add('cb-' + savedCB);
+
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
