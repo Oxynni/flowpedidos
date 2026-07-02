@@ -68,6 +68,8 @@ export interface ChatResponse {
   reply: string;
   sessionId: string;
   suggestions: string[];
+  action?: string;
+  actionData?: any;
 }
 
 export interface ApiResponse<T> {

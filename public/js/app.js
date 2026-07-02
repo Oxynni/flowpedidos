@@ -555,6 +555,14 @@ function setSuggestions(suggestions) {
   ).join('');
 }
 
+function formatChatRich(content) {
+  let html = escapeHtml(content);
+  html = html.replace(/\n/g, '<br>');
+  html = html.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+  html = html.replace(/\[Click aquí para descargar([^\]]*)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="display:inline-block;background:#00B4D8;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:bold;margin:8px 0;">📥 Descargar$1</a>');
+  return html;
+}
+
 async function sendChat(msg) {
   const message = msg || chatInput.value.trim();
   if (!message) return;
@@ -562,17 +570,117 @@ async function sendChat(msg) {
   addChatMessage('user', message);
   showTyping();
   try {
-    const data = await apiFetch('/chat/message', {
+    const res = await fetch(`${API}/chat/message`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, sessionId: currentSession }),
     });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Error del servidor');
+    const data = json.data;
     hideTyping();
-    addChatMessage('assistant', data.reply);
+
+    const div = document.createElement('div');
+    div.className = 'chat-msg assistant';
+    div.innerHTML = formatChatRich(data.reply) + `<span class="time">${new Date().toLocaleTimeString()}</span>`;
+    chatMessages.appendChild(div);
+
+    if (data.action === 'download_invoice' && data.actionData?.downloadUrl) {
+      const linkDiv = document.createElement('div');
+      linkDiv.style.margin = '8px 0';
+      linkDiv.innerHTML = `<a href="${data.actionData.downloadUrl}" target="_blank" style="display:inline-block;background:#10b981;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px;">📥 Descargar Factura PDF</a>`;
+      div.appendChild(linkDiv);
+    }
+
+    if (data.action === 'order_created' && data.actionData?.order) {
+      const btnDiv = document.createElement('div');
+      btnDiv.style.cssText = 'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap';
+      btnDiv.innerHTML = `
+        <button class="btn btn-sm btn-primary" onclick="advanceOrderChat('${data.actionData.order.id}')">⚡ Avanzar</button>
+        <button class="btn btn-sm btn-success" onclick="viewOrderChat('${data.actionData.order.id}')">📋 Ver Detalle</button>
+      `;
+      div.appendChild(btnDiv);
+    }
+
+    if (data.action === 'invoice_created' && data.actionData?.invoice) {
+      const btnDiv = document.createElement('div');
+      btnDiv.style.cssText = 'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap';
+      btnDiv.innerHTML = `
+        <button class="btn btn-sm btn-success" onclick="sendChat('Descarga la factura')">📥 Descargar PDF</button>
+        <button class="btn btn-sm btn-primary" onclick="sendChat('Crea el despacho')">📤 Crear Despacho</button>
+      `;
+      div.appendChild(btnDiv);
+    }
+
+    if (data.action === 'dispatch_created' && data.actionData?.dispatch) {
+      const btnDiv = document.createElement('div');
+      btnDiv.style.cssText = 'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap';
+      btnDiv.innerHTML = `
+        <button class="btn btn-sm btn-primary" onclick="sendChat('Avanza el despacho')">📤 Avanzar</button>
+        <button class="btn btn-sm btn-outline" onclick="sendChat('Ver despachos')">Ver Despachos</button>
+      `;
+      div.appendChild(btnDiv);
+    }
+
+    if (data.action === 'order_advanced' && data.actionData?.order) {
+      const order = data.actionData.order;
+      if (order.status !== 'entregado' && order.status !== 'cancelado') {
+        const btnDiv = document.createElement('div');
+        btnDiv.style.cssText = 'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap';
+        btnDiv.innerHTML = `<button class="btn btn-sm btn-primary" onclick="sendChat('Avanza el pedido')">⚡ Seguir Avanzando</button>`;
+        div.appendChild(btnDiv);
+      }
+    }
+
+    if (data.action === 'full_flow_done' && data.actionData?.order) {
+      const btnDiv = document.createElement('div');
+      btnDiv.style.cssText = 'margin-top:8px;display:flex;gap:8px;flex-wrap:wrap';
+      btnDiv.innerHTML = `<button class="btn btn-sm btn-success" onclick="sendChat('Descarga la factura')">📥 Descargar Factura</button>`;
+      div.appendChild(btnDiv);
+    }
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
     setSuggestions(data.suggestions);
   } catch (e) {
     hideTyping();
     addChatMessage('assistant', `Error: ${e.message}`);
   }
+}
+
+async function advanceOrderChat(orderId) {
+  showTyping();
+  try {
+    const res = await fetch(`/api/orders/${orderId}/advance`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' } });
+    const json = await res.json();
+    hideTyping();
+    if (json.success) {
+      addChatMessage('assistant', `✅ Pedido avanzado a: ${json.data.order.status.replace(/_/g, ' ')}`);
+      if (json.data.autoProcessed?.invoice) addChatMessage('assistant', `📄 Factura generada: ${json.data.autoProcessed.invoice.invoiceNumber} por $${json.data.autoProcessed.invoice.total.toLocaleString()}`);
+      if (json.data.autoProcessed?.dispatch) addChatMessage('assistant', `📤 Despacho creado: ${json.data.autoProcessed.dispatch.trackingNumber} con ${json.data.autoProcessed.dispatch.carrier}`);
+    } else {
+      addChatMessage('assistant', `Error: ${json.error}`);
+    }
+    loadOrders(); loadInvoices(); loadDispatches();
+  } catch (e) { hideTyping(); addChatMessage('assistant', `Error: ${e.message}`); }
+}
+
+async function viewOrderChat(orderId) {
+  showTyping();
+  try {
+    const order = await apiFetch(`/orders/${orderId}`);
+    hideTyping();
+    const lines = [
+      `📦 **Detalle del Pedido**`,
+      `Cliente: ${order.clientName}`,
+      `Email: ${order.clientEmail}`,
+      `Estado: ${order.status.replace(/_/g, ' ')}`,
+      `Total: $${order.total.toLocaleString()}`,
+      `Pago: ${order.paymentMethod}`,
+      `Productos:`,
+      ...order.items.map(i => `  - ${i.productName} x${i.quantity} = $${i.subtotal.toLocaleString()}`),
+    ];
+    addChatMessage('assistant', lines.join('\n'));
+  } catch (e) { hideTyping(); addChatMessage('assistant', `Error: ${e.message}`); }
 }
 
 chatSend.addEventListener('click', () => sendChat());
