@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.gitignore
+*.log
+test_*.txt
+README.md
+docker-compose.yml
+render.yaml
+nginx
