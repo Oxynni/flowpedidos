@@ -1,11 +1,4 @@
-# ═══════════════════════════════════════════════════════════
-# FLOWPEDIDOS - docker-compose.yml
-# Orquesta la aplicación + Nginx (proxy inverso)
-# Uso: docker compose up --build -d
-# ═══════════════════════════════════════════════════════════
-
 services:
-  # ─── Aplicación FlowPedidos (Node.js) ───
   app:
     build: .
     container_name: flowpedidos-app
@@ -13,13 +6,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-    # En redes Docker internas la app queda limitada a nginx
     expose:
       - "3000"
     networks:
       - flowpedidos-net
 
-  # ─── Nginx: proxy inverso (cubre el requisito "Nginx") ───
   nginx:
     image: nginx:alpine
     container_name: flowpedidos-nginx
